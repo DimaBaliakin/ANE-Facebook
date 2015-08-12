@@ -21,6 +21,8 @@
 
 #define DEFINE_ANE_FUNCTION(fn) FREObject fn(FREContext context, void* functionData, uint32_t argc, FREObject argv[])
 
+#define MAP_FUNCTION(fn, data) { (const uint8_t*)(#fn), (data), &(fn) }
+
 #define ROOT_VIEW_CONTROLLER [[[UIApplication sharedApplication] keyWindow] rootViewController]
 
 void FPANE_DispatchEvent(FREContext context, NSString *eventName);
@@ -28,9 +30,14 @@ void FPANE_DispatchEventWithInfo(FREContext context, NSString *eventName, NSStri
 void FPANE_Log(FREContext context, NSString *message);
 
 NSString * FPANE_FREObjectToNSString(FREObject object);
-BOOL * FPANE_FREObjectToBOOL(FREObject object);
 NSArray * FPANE_FREObjectToNSArrayOfNSString(FREObject object);
 NSDictionary * FPANE_FREObjectsToNSDictionaryOfNSString(FREObject keys, FREObject values);
+BOOL FPANE_FREObjectToBool(FREObject object);
+NSInteger FPANE_FREObjectToInt(FREObject object);
 
 FREObject FPANE_BOOLToFREObject(BOOL boolean);
-FREObject FPANE_NSStringToFREOBject(NSString *string);
+FREObject FPANE_IntToFREObject(NSInteger i);
+FREObject FPANE_DoubleToFREObject(double d);
+FREObject FPANE_NSStringToFREObject(NSString *string);
+
+FREObject FPANE_CreateError( NSString* error, NSInteger* id );

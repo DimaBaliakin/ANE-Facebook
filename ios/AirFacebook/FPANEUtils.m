@@ -47,13 +47,6 @@ NSString * FPANE_FREObjectToNSString(FREObject object)
     return [NSString stringWithUTF8String:(char*)string];
 }
 
-BOOL * FPANE_FREObjectToBOOL(FREObject object)
-{
-    uint32_t boolValue;
-    FREGetObjectAsBool(object, &boolValue);
-    return boolValue != 0;
-}
-
 NSArray * FPANE_FREObjectToNSArrayOfNSString(FREObject object)
 {
     uint32_t arrayLength;
@@ -64,13 +57,13 @@ NSArray * FPANE_FREObjectToNSArrayOfNSString(FREObject object)
     for (NSInteger i = 0; i < arrayLength; i++)
     {
         FREObject itemRaw;
-        FREGetArrayElementAt(object, i, &itemRaw);
+        FREGetArrayElementAt(object, (uint)i, &itemRaw);
         
         // Convert item to string. Skip with warning if not possible.
         const uint8_t *itemString;
         if (FREGetObjectAsUTF8(itemRaw, &stringLength, &itemString) != FRE_OK)
         {
-            NSLog(@"Couldn't convert FREObject to NSString at index %u", i);
+            NSLog(@"Couldn't convert FREObject to NSString at index %ld", (long)i);
             continue;
         }
         
@@ -93,14 +86,14 @@ NSDictionary * FPANE_FREObjectsToNSDictionaryOfNSString(FREObject keys, FREObjec
     for (NSInteger i = 0; i < numItems; i++)
     {
         FREObject keyRaw, valueRaw;
-        FREGetArrayElementAt(keys, i, &keyRaw);
-        FREGetArrayElementAt(values, i, &valueRaw);
+        FREGetArrayElementAt(keys, (uint)i, &keyRaw);
+        FREGetArrayElementAt(values, (uint)i, &valueRaw);
         
         // Convert key and value to strings. Skip with warning if not possible.
         const uint8_t *keyString, *valueString;
         if (FREGetObjectAsUTF8(keyRaw, &stringLength, &keyString) != FRE_OK || FREGetObjectAsUTF8(valueRaw, &stringLength, &valueString) != FRE_OK)
         {
-            NSLog(@"Couldn't convert FREObject to NSString at index %u", i);
+            NSLog(@"Couldn't convert FREObject to NSString at index %ld", (long)i);
             continue;
         }
         
@@ -110,6 +103,20 @@ NSDictionary * FPANE_FREObjectsToNSDictionaryOfNSString(FREObject keys, FREObjec
     }
     
     return [NSDictionary dictionaryWithDictionary:mutableDictionary];
+}
+
+BOOL FPANE_FREObjectToBool(FREObject object)
+{
+    uint32_t b;
+    FREGetObjectAsBool(object, &b);
+    return b != 0;
+}
+
+NSInteger FPANE_FREObjectToInt(FREObject object)
+{
+    int32_t i;
+    FREGetObjectAsInt32(object, &i);
+    return i;
 }
 
 
@@ -122,9 +129,39 @@ FREObject FPANE_BOOLToFREObject(BOOL boolean)
     return result;
 }
 
-FREObject FPANE_NSStringToFREOBject(NSString *string)
+FREObject FPANE_IntToFREObject(NSInteger i)
 {
     FREObject result;
-    FRENewObjectFromUTF8(string.length, (const uint8_t *)[string UTF8String], &result);
+    FRENewObjectFromInt32((int32_t)i, &result);
     return result;
+}
+
+FREObject FPANE_DoubleToFREObject(double d)
+{
+    FREObject result;
+    FRENewObjectFromDouble(d, &result);
+    return result;
+}
+
+FREObject FPANE_NSStringToFREObject(NSString *string)
+{
+    FREObject result;
+    FRENewObjectFromUTF8((int)string.length, (const uint8_t *)[string UTF8String], &result);
+    return result;
+}
+
+FREObject FPANE_CreateError( NSString* error, NSInteger* id )
+{
+    FREObject ret;
+    FREObject errorThrown;
+    
+    FREObject freId;
+    FRENewObjectFromInt32( (int32_t)*id, &freId);
+    FREObject argV[] = {
+        FPANE_NSStringToFREObject(error),
+        freId
+    };
+    FRENewObject((const uint8_t*)"Error", 2, argV, &ret, &errorThrown);
+    
+    return ret;
 }
